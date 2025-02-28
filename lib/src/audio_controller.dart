@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
@@ -12,6 +13,7 @@ class AudioController extends GetxController {
   Duration? _duration;
 
   Duration get duration => _duration ?? Duration.zero;
+
   double get durationInMilliseconds => _duration?.inMilliseconds.toDouble() ?? 0.0;
 
   Timer? _timer;
@@ -28,9 +30,24 @@ class AudioController extends GetxController {
   String? filePath;
 
   var message = ''.obs;
+  var hasInternet = false.obs;
+  Future<bool> hasInternetConnection() async {
+    List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.mobile) ||
+        connectivityResult.contains(ConnectivityResult.wifi)) {
+      hasInternet.value = true;
+      return true;
+    }
+    hasInternet.value = false;
+    return false;
+  }
 
   Future<void> downloadAudio() async {
     try {
+      if (!await hasInternetConnection()) {
+        message.value = '🚫 اتصال اینترنت برقرار نیست';
+        return;
+      }
       downloadStatus.value = DownloadStatus.downloading;
       message.value = 'دانلود صوت شروع شد';
 
@@ -88,7 +105,7 @@ class AudioController extends GetxController {
       message.value = '';
       isPlaying.value = true;
 
-      _audioPlayer.playerStateStream.listen((state) async{
+      _audioPlayer.playerStateStream.listen((state) async {
         if (state.processingState == ProcessingState.completed) {
           isPlaying.value = false;
           isFinished.value = true;
@@ -102,6 +119,7 @@ class AudioController extends GetxController {
   }
 
   void seekAudio(double milliseconds) async {
+    if (milliseconds < 0 || milliseconds > durationInMilliseconds) return;
     await _audioPlayer.seek(Duration(milliseconds: milliseconds.toInt()));
   }
 
@@ -167,7 +185,8 @@ class AudioController extends GetxController {
 
   // iOS
   Future<void> launchUniversalLinkIOS() async {
-    Uri url = Uri.parse('https://app.didar.me/api/file/download?id=04df8965-bddb-456d-9eb6-34e9524e7a0f&losid=857fbb18-b50a-4828-940d-327f0dd3e9fb');
+    Uri url = Uri.parse(
+        'https://app.didar.me/api/file/download?id=04df8965-bddb-456d-9eb6-34e9524e7a0f&losid=857fbb18-b50a-4828-940d-327f0dd3e9fb');
 
     final bool nativeAppLaunchSucceeded = await launchUrl(
       url,
