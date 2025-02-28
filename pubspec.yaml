@@ -1,9 +1,9 @@
 name: didar
 description: "Custom Audio Player Flutter Project by shervin.hz07@gmail.com"
 version: 1.0.0+1
-homepage:
-repository:
-issue_tracker:
+homepage: https://github.com/shervin-h/didar
+repository: https://github.com/shervin-h/didar
+issue_tracker: https://github.com/shervin-h/didar/issues
 
 environment:
   sdk: ^3.6.0
